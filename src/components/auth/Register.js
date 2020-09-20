@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Grid, Form, Segment, Button, Header, Message, Icon } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 import firebase from '../../firebase';
+import md5 from 'md5';
 
 class Register extends Component {
 	state = {
@@ -10,7 +11,8 @@ class Register extends Component {
 		password: "",
 		passwordConformation: "",
 		errors: [],
-		loading: false,
+    loading: false,
+    usersRef: firebase.database().ref('users'),
 	};
 
 	isFormValid = () => {
@@ -62,7 +64,7 @@ class Register extends Component {
 		});
 	};
 
-	handleSubmit = (event) => {
+	handleSubmit = async (event) => {
 		event.preventDefault();
 		if (this.isFormValid()) {
 			// console.log("Register submit: ", this.state);
@@ -70,33 +72,49 @@ class Register extends Component {
 				errors: [],
 				loading: true,
 			});
+			try {
+				const createdUser = await firebase
+					.auth()
+					.createUserWithEmailAndPassword(
+						this.state.email,
+						this.state.password
+					);
 
-			firebase
-				.auth()
-				.createUserWithEmailAndPassword(this.state.email, this.state.password)
-				.then((createdUser) => {
-          console.log("createdUser: ", createdUser);
-          this.setState({ 
-            loading : false
-          });
-				})
-				.catch((err) => {
-          console.error(err);
-          this.setState({ 
-            errors: this.state.errors.concat(err), 
-            loading: false 
-          });
+				await createdUser.user.updateProfile({
+					displayName: this.state.username,
+					photoURL: `http://gravatar.com/avatar/${md5(
+						createdUser.user.email
+					)}?d=identicon`,
 				});
+				await this.saveUser(createdUser);
+				console.log("createdUser in firebase: ", createdUser);
+				this.setState({
+				  loading: false,
+				});
+			} catch (err) {
+				console.error(err);
+				this.setState({
+					errors: this.state.errors.concat(err),
+					loading: false,
+				});
+			}
 		}
+	};
+
+	saveUser = (createdUser) => {
+    return this.state.usersRef.child(createdUser.user.uid).set({
+      name: createdUser.user.displayName,
+      avatar: createdUser.user.photoURL
+    });
   };
-  
-  handleInputError = (errors, inputName) => {
-    return errors.some((error) =>
+
+	handleInputError = (errors, inputName) => {
+		return errors.some((error) =>
 			error.message.toLowerCase().includes(inputName)
 		)
 			? "error"
 			: "";
-  };
+	};
 
 	render() {
 		const {
@@ -104,8 +122,8 @@ class Register extends Component {
 			email,
 			password,
 			passwordConformation,
-      errors,
-      loading
+			errors,
+			loading,
 		} = this.state;
 		return (
 			<Grid textAlign='center' verticalAlign='middle' className='app'>
