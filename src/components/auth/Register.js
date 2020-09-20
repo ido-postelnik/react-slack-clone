@@ -67,12 +67,14 @@ class Register extends Component {
 	handleSubmit = async (event) => {
 		event.preventDefault();
 		if (this.isFormValid()) {
-			// console.log("Register submit: ", this.state);
-			this.setState({
-				errors: [],
-				loading: true,
-			});
-			try {
+      try {
+				// console.log("Register submit: ", this.state);
+				this.setState({
+					errors: [],
+					loading: true,
+        });
+        
+				// Create new user with auth service
 				const createdUser = await firebase
 					.auth()
 					.createUserWithEmailAndPassword(
@@ -80,16 +82,20 @@ class Register extends Component {
 						this.state.password
 					);
 
+				// Update some user details (displayName and photoURL)
 				await createdUser.user.updateProfile({
 					displayName: this.state.username,
 					photoURL: `http://gravatar.com/avatar/${md5(
 						createdUser.user.email
 					)}?d=identicon`,
 				});
+
+				// Add user to users DB
 				await this.saveUser(createdUser);
+
 				console.log("createdUser in firebase: ", createdUser);
 				this.setState({
-				  loading: false,
+					loading: false,
 				});
 			} catch (err) {
 				console.error(err);
@@ -102,6 +108,7 @@ class Register extends Component {
 	};
 
 	saveUser = (createdUser) => {
+    // Add user to users db in firebase 'realtime database'
     return this.state.usersRef.child(createdUser.user.uid).set({
       name: createdUser.user.displayName,
       avatar: createdUser.user.photoURL
@@ -128,7 +135,7 @@ class Register extends Component {
 		return (
 			<Grid textAlign='center' verticalAlign='middle' className='app'>
 				<Grid.Column style={{ maxWidth: 450 }}>
-					<Header as='h2' icon color='orange' textAlign='center'>
+					<Header as='h1' icon color='orange' textAlign='center'>
 						<Icon name='puzzle piece' color='orange' />
 						Register for DevChat
 					</Header>
