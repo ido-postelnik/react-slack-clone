@@ -6,17 +6,27 @@ import { Menu, Icon, Modal, Form, Input, Button } from "semantic-ui-react";
 
 class Channels extends Component {
 	state = {
-		user: this.props.currentUser,
+    user: this.props.currentUser,
+    activeChannel: '',
 		channels: [],
 		channelName: "",
 		channelDetails: "",
 		channelsRef: firebase.database().ref("channels"),
 		modal: false,
+		firstLoad: true,
 	};
 
 	componentDidMount() {
 		this.addListeners();
-	}
+  }
+  
+  componentWillUnmount() {
+    this.removeListeners();
+  }
+
+  removeListeners = () => {
+    this.state.channelsRef.off();
+  }
 
 	addListeners = () => {
 		let loadedChannels = [];
@@ -24,9 +34,14 @@ class Channels extends Component {
 		this.state.channelsRef.on("child_added", (snap) => {
 			loadedChannels.push(snap.val());
 			console.log("loadedChannels: ", loadedChannels);
-			this.setState({
-				channels: loadedChannels,
-			});
+			this.setState(
+				{
+					channels: loadedChannels,
+				},
+				() => {
+					this.setFirstChannel();
+				}
+			);
 		});
 	};
 
@@ -91,26 +106,50 @@ class Channels extends Component {
 		} catch (err) {
 			console.error(err);
 		}
-  };
-  
-  changeChannel = (channel) => {
-    this.props.setCurrentChannel(channel);
+	};
+
+	setFirstChannel = () => {
+		const firstChannel = this.state.channels[0];
+
+		if (this.state.firstLoad && this.state.channels.length > 0) {
+      this.props.setCurrentChannel(firstChannel);
+      this.setActiveChannel(firstChannel);
+		}
+
+		this.setState({
+			firstLoad: false,
+		});
+	};
+
+	changeChannel = (channel) => {
+		this.setActiveChannel(channel);
+		this.props.setCurrentChannel(channel);
+	};
+
+	setActiveChannel = (channel) => {
+    this.setState({
+			activeChannel: channel.id,
+		});
   };
 
 	displayChannels = (channels) => {
-    return channels.length > 0 && channels.map(channel => {
-      return (
-				<Menu.Item
-					key={channel.id}
-					onClick={() => this.changeChannel(channel)}
-					name={channel.name}
-					style={{ opacity: 0.7 }}
-				>
-					# {channel.name}
-				</Menu.Item>
-			);
-    })
-  };
+		return (
+			channels.length > 0 &&
+			channels.map((channel) => {
+				return (
+					<Menu.Item
+						key={channel.id}
+						onClick={() => this.changeChannel(channel)}
+						name={channel.name}
+						style={{ opacity: 0.7 }}
+						active={channel.id === this.state.activeChannel}
+					>
+						# {channel.name}
+					</Menu.Item>
+				);
+			})
+		);
+	};
 
 	render() {
 		const { channels, modal } = this.state;
