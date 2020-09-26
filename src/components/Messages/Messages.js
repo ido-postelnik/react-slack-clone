@@ -14,7 +14,10 @@ class Messages extends Component {
 		messages: [],
 		messagesLoading: true,
 		shouldShowProgressBar: false,
-		numUniqueUsers: ''
+		numUniqueUsers: "",
+		searchTerm: "",
+		searchLoading: false,
+		searchResults: [],
 	};
 
 	componentDidMount() {
@@ -39,7 +42,7 @@ class Messages extends Component {
 				messagesLoading: false,
 			});
 			this.countUniqueUsers(loadedMessages);
-		});		
+		});
 	};
 
 	displayMessages = (messages) =>
@@ -57,7 +60,7 @@ class Messages extends Component {
 		}, []);
 
 		const plural = uniqueUsers.length > 1 || uniqueUsers.length === 0;
-		const numUniqueUsers = `${uniqueUsers.length} user${plural ? 's' : ''}`;
+		const numUniqueUsers = `${uniqueUsers.length} user${plural ? "s" : ""}`;
 		this.setState({
 			numUniqueUsers,
 		});
@@ -77,6 +80,36 @@ class Messages extends Component {
 
 	displayChannelName = (channel) => (channel ? `#${channel.name}` : "");
 
+	handleSearchChange = (event) => {
+		this.setState(
+			{
+				searchTerm: event.target.value,
+				searchLoading: true,
+			},
+			() => this.handleSearchMessages()
+		);
+	};
+
+	handleSearchMessages = () => {
+		const channelMessages = [...this.state.messages]; // to not mutate the original array
+		const regex = new RegExp(this.state.searchTerm, "gi"); // Globaly and Case senstevly
+		const searchResults = channelMessages.reduce((acc, message) => {
+			if (
+				(message.content && message.content.match(regex)) ||
+				(message.user.name && message.user.name.match(regex))
+			) {
+				acc.push(message);
+			}
+
+			return acc;
+		}, []);
+
+		this.setState({searchResults});
+		setTimeout(() => {
+			this.setState({ searchLoading: false });
+		}, 1000);
+	};
+
 	render() {
 		const {
 			messagesRef,
@@ -85,6 +118,9 @@ class Messages extends Component {
 			messages,
 			shouldShowProgressBar,
 			numUniqueUsers,
+			searchTerm,
+			searchResults,
+			searchLoading,
 		} = this.state;
 
 		return (
@@ -92,6 +128,8 @@ class Messages extends Component {
 				<MessagesHeader
 					channelName={this.displayChannelName(channel)}
 					numUniqueUsers={numUniqueUsers}
+					handleSearchChange={this.handleSearchChange}
+					searchLoading={searchLoading}
 				/>
 
 				<Segment>
@@ -100,7 +138,9 @@ class Messages extends Component {
 							shouldShowProgressBar ? "messages__progress" : ""
 						}`}
 					>
-						{this.displayMessages(messages)}
+						{searchTerm
+							? this.displayMessages(searchResults)
+							: this.displayMessages(messages)}
 					</Comment.Group>
 				</Segment>
 
