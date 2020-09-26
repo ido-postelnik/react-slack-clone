@@ -8,9 +8,13 @@ body,
 
 /* messages */
 .messages{
-  height: 440px;
+  height: 70vh;
   overflow-y: scroll;
   min-width: 100%;
+}
+
+.messages__progress{
+  height: 66vh !important;
 }
 
 .message__form{

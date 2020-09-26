@@ -13,6 +13,7 @@ class Messages extends Component {
 		user: this.props.currentUser,
 		messages: [],
 		messagesLoading: true,
+		shouldShowProgressBar: false,
 	};
 
 	componentDidMount() {
@@ -39,25 +40,43 @@ class Messages extends Component {
 		});
 	};
 
-	displayMessages = (messages) => (
-		messages.length > 0 && messages.map(m => (
-			<Message 
-				key={m.timestamp}
-				message={m}
-				user={this.state.user}
-			/>
-		))
-	)
+	displayMessages = (messages) =>
+		messages.length > 0 &&
+		messages.map((m) => (
+			<Message key={m.timestamp} message={m} user={this.state.user} />
+		));
+
+	isProgressBarVisible = (uploadState) => {
+		if (uploadState === 'uploading') {
+			this.setState({
+				shouldShowProgressBar: true,
+			});
+		} else {
+			this.setState({
+				shouldShowProgressBar: false,
+			});
+		}
+	};
 
 	render() {
-		const { messagesRef, channel, user, messages } = this.state;
+		const {
+			messagesRef,
+			channel,
+			user,
+			messages,
+			shouldShowProgressBar,
+		} = this.state;
 
 		return (
 			<React.Fragment>
 				<MessagesHeader />
 
 				<Segment>
-					<Comment.Group className='messages'>
+					<Comment.Group
+						className={`messages ${
+							shouldShowProgressBar ? "messages__progress" : ""
+						}`}
+					>
 						{this.displayMessages(messages)}
 					</Comment.Group>
 				</Segment>
@@ -66,6 +85,7 @@ class Messages extends Component {
 					messagesRef={messagesRef}
 					currentChannel={channel}
 					currentUser={user}
+					isProgressBarVisible={this.isProgressBarVisible}
 				/>
 			</React.Fragment>
 		);

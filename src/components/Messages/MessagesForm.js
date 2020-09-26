@@ -84,23 +84,23 @@ class MessagesForm extends Component {
 		const ref = this.props.messagesRef;
 		const filePath = `chat/public/${uuidv4()}.jpg`;
 
+		this.props.isProgressBarVisible("uploading");
 		this.setState({
 			uploadState: "uploading",
 			uploadTask: this.state.storageRef.child(filePath).put(file, metadata),
 		},
 			() => {
 				this.state.uploadTask.on("state_changed", (snap) => {
-					console.log("uploadTask snap: ", snap);
+					// console.log("uploadTask snap: ", snap);
 					const precentUploaded = Math.round(
 						(snap.bytesTransferred / snap.totalBytes) * 100
 					);
-					console.log('precentUploaded: ', precentUploaded);
 					this.setState({precentUploaded});
 				},
 				// Handle error of "state_changed"
 				(err) => {
 				console.error(err);
-				this.set({
+				this.setState({
 					errors: this.state.errors.concat(err),
 					uploadState: "error",
 					uploadTask: null,
@@ -133,6 +133,7 @@ class MessagesForm extends Component {
 		try{
 			await ref.child(pathToUpload).push().set(this.createMessageObj(fileUrl));
 
+			this.props.isProgressBarVisible("done");
 			this.setState({
 				uploadState: "done",
 			});
@@ -191,13 +192,16 @@ class MessagesForm extends Component {
 						content='Upload Media'
 						labelPosition='right'
 						icon='cloud upload'
+						disabled={uploadState === 'uploading'}
 					/>
 				</Button.Group>
+
 				<FileModal
 					modal={modal}
 					closeModal={this.closeModal}
 					uploadFile={this.uploadFile}
 				/>
+
 				<ProgressBar
 					uploadState={uploadState}
 					precentUploaded={precentUploaded}
