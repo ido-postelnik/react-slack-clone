@@ -1,6 +1,8 @@
 import React, { Component } from "react";
+import { connect } from 'react-redux';
 import { Segment, Comment } from "semantic-ui-react";
 import firebase from '../../firebase';
+import { setUserPosts } from "../../actions";
 
 import MessagesHeader from "./MessagesHeader";
 import MessagesForm from "./MessagesForm";
@@ -36,18 +38,18 @@ class Messages extends Component {
 	addUserStarsListeners = (channelId, userId) => {
 		this.state.usersRef
 			.child(userId)
-			.child('starred')
-			.once('value')
-			.then(data => {
-				if(data.val() !== null) {
+			.child("starred")
+			.once("value")
+			.then((data) => {
+				if (data.val() !== null) {
 					const channelIds = Object.keys(data.val());
 					const prevStarred = channelIds.includes(channelId.toString());
 					this.setState({
 						isChannelStarred: prevStarred,
 					});
 				}
-			})
-	}
+			});
+	};
 
 	addListeners = (channelId) => {
 		this.addMessageListener(channelId);
@@ -64,6 +66,7 @@ class Messages extends Component {
 				messagesLoading: false,
 			});
 			this.countUniqueUsers(loadedMessages);
+			this.countUserPosts(loadedMessages);
 		});
 	};
 
@@ -87,6 +90,23 @@ class Messages extends Component {
 			numUniqueUsers,
 		});
 	};
+
+	countUserPosts = (messages) => {
+		let userPosts = messages.reduce((acc, message) => {
+			if(message.user.name in acc) {
+				acc[message.user.name].count += 1;
+			} else {
+				acc[message.user.name] = {
+					avatar: message.user.avatar,
+					count: 1
+				};
+			}
+
+			return acc;
+		}, {});
+
+		this.props.setUserPosts(userPosts);
+	}
 
 	isProgressBarVisible = (uploadState) => {
 		if (uploadState === "uploading") {
@@ -228,4 +248,4 @@ class Messages extends Component {
 	}
 }
 
-export default Messages;
+export default connect(null, { setUserPosts })(Messages);
