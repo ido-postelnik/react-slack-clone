@@ -18,6 +18,8 @@ class Messages extends Component {
 		searchTerm: "",
 		searchLoading: false,
 		searchResults: [],
+		privateChannel: this.props.isPrivateChannel,
+		privateMessagesRef: firebase.database().ref('privateMessages')
 	};
 
 	componentDidMount() {
@@ -34,8 +36,9 @@ class Messages extends Component {
 
 	addMessageListener = (channelId) => {
 		let loadedMessages = [];
+		let ref = this.getMessagesRef();
 
-		this.state.messagesRef.child(channelId).on("child_added", (snap) => {
+		ref.child(channelId).on("child_added", (snap) => {
 			loadedMessages.push(snap.val());
 			this.setState({
 				messages: loadedMessages,
@@ -78,7 +81,9 @@ class Messages extends Component {
 		}
 	};
 
-	displayChannelName = (channel) => (channel ? `#${channel.name}` : "");
+	displayChannelName = (channel) => {
+		return channel ? `${this.state.privateChannel ? '@' : '#'}${channel.name}` : '';
+	}
 
 	handleSearchChange = (event) => {
 		this.setState(
@@ -104,10 +109,15 @@ class Messages extends Component {
 			return acc;
 		}, []);
 
-		this.setState({searchResults});
+		this.setState({ searchResults });
 		setTimeout(() => {
 			this.setState({ searchLoading: false });
 		}, 1000);
+	};
+
+	getMessagesRef = () => {
+		const { messagesRef, privateMessagesRef, privateChannel } = this.state;
+		return privateChannel ? privateMessagesRef : messagesRef;
 	};
 
 	render() {
@@ -121,6 +131,7 @@ class Messages extends Component {
 			searchTerm,
 			searchResults,
 			searchLoading,
+			privateChannel,
 		} = this.state;
 
 		return (
@@ -130,6 +141,7 @@ class Messages extends Component {
 					numUniqueUsers={numUniqueUsers}
 					handleSearchChange={this.handleSearchChange}
 					searchLoading={searchLoading}
+					isPrivateChannel={privateChannel}
 				/>
 
 				<Segment>
@@ -149,6 +161,8 @@ class Messages extends Component {
 					currentChannel={channel}
 					currentUser={user}
 					isProgressBarVisible={this.isProgressBarVisible}
+					isPrivateChannel={privateChannel}
+					getMessagesRef={this.getMessagesRef}
 				/>
 			</React.Fragment>
 		);

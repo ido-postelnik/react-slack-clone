@@ -18,6 +18,7 @@ class MessagesForm extends Component {
 		uploadTask: null,
 		storageRef: firebase.storage().ref(),
 		precentUploaded: 0,
+		isPrivateChannel: this.props.isPrivateChannel
 	};
 
 	openModal = () => {
@@ -45,25 +46,28 @@ class MessagesForm extends Component {
 			},
 		};
 
-		if(fileUrl !== null) {
+		if (fileUrl !== null) {
 			message.image = fileUrl;
 		} else {
 			message.content = this.state.message;
 		}
 
-		console.log('Created message: ', message);
+		console.log("Created message: ", message);
 
 		return message;
 	};
 
 	sendTextMessage = async () => {
-		const { messagesRef } = this.props;
+		const { getMessagesRef } = this.props;
 		const { message, channel } = this.state;
 
 		if (message) {
 			try {
 				this.setState({ loading: true });
-				await messagesRef.child(channel.id).push().set(this.createMessageObj());
+				await getMessagesRef()
+					.child(channel.id)
+					.push()
+					.set(this.createMessageObj());
 				this.setState({ loading: false, message: "", errors: [] });
 			} catch (err) {
 				console.error(err);
@@ -79,72 +83,81 @@ class MessagesForm extends Component {
 		}
 	};
 
+	getPathForSavedFile = () => {
+		if (this.state.isPrivateChannel) {
+			return `chat/private-${this.state.channel.id}`;
+		} else {
+			return 'chat/public';
+		}
+	};
+
 	uploadFile = async (file, metadata) => {
 		const pathToUpload = this.state.channel.id;
-		const ref = this.props.messagesRef;
-		const filePath = `chat/public/${uuidv4()}.jpg`;
+		const ref = this.props.getMessagesRef();
+		const filePath = `${this.getPathForSavedFile()}/${uuidv4()}.jpg`;
 
 		this.props.isProgressBarVisible("uploading");
-		this.setState({
-			uploadState: "uploading",
-			uploadTask: this.state.storageRef.child(filePath).put(file, metadata),
-		},
-			() => {
-				this.state.uploadTask.on("state_changed", (snap) => {
-					// console.log("uploadTask snap: ", snap);
-					const precentUploaded = Math.round(
-						(snap.bytesTransferred / snap.totalBytes) * 100
-					);
-					this.setState({precentUploaded});
-				},
-				// Handle error of "state_changed"
-				(err) => {
-				console.error(err);
-				this.setState({
-					errors: this.state.errors.concat(err),
-					uploadState: "error",
-					uploadTask: null,
-				})
+		this.setState(
+			{
+				uploadState: "uploading",
+				uploadTask: this.state.storageRef.child(filePath).put(file, metadata),
 			},
-			// After "state_changed" finished = uploading the image to firebase storage is done, 
-			// We'll get the url for it, and store in the message table in the DB
-			// It is the callback of the "on(state_changed)"
 			() => {
-				this.state.uploadTask.snapshot.ref
-					.getDownloadURL()
-					.then((downloadUrl) => {
-						this.sendFileMessage(downloadUrl, ref, pathToUpload);
-					})
-					.catch((err) => {
+				this.state.uploadTask.on(
+					"state_changed",
+					(snap) => {
+						// console.log("uploadTask snap: ", snap);
+						const precentUploaded = Math.round(
+							(snap.bytesTransferred / snap.totalBytes) * 100
+						);
+						this.setState({ precentUploaded });
+					},
+					// Handle error of "state_changed"
+					(err) => {
 						console.error(err);
-						this.set({
+						this.setState({
 							errors: this.state.errors.concat(err),
 							uploadState: "error",
 							uploadTask: null,
 						});
-					});
-				} // Ends the "state_changed" callback
-				) // Ends the "state_changed" on listener
+					},
+					// After "state_changed" finished = uploading the image to firebase storage is done,
+					// We'll get the url for it, and store in the message table in the DB
+					// It is the callback of the "on(state_changed)"
+					() => {
+						this.state.uploadTask.snapshot.ref
+							.getDownloadURL()
+							.then((downloadUrl) => {
+								this.sendFileMessage(downloadUrl, ref, pathToUpload);
+							})
+							.catch((err) => {
+								console.error(err);
+								this.set({
+									errors: this.state.errors.concat(err),
+									uploadState: "error",
+									uploadTask: null,
+								});
+							});
+					} // Ends the "state_changed" callback
+				); // Ends the "state_changed" on listener
 			} // Ends the setState function callback
-		)
+		);
 	};
 
 	sendFileMessage = async (fileUrl, ref, pathToUpload) => {
-		try{
+		try {
 			await ref.child(pathToUpload).push().set(this.createMessageObj(fileUrl));
 
 			this.props.isProgressBarVisible("done");
 			this.setState({
 				uploadState: "done",
 			});
-		}
-		catch(err) {
+		} catch (err) {
 			console.error(err);
 			this.set({
 				errors: this.state.errors.concat(err),
 			});
 		}
-
 	};
 
 	render() {
@@ -192,7 +205,7 @@ class MessagesForm extends Component {
 						content='Upload Media'
 						labelPosition='right'
 						icon='cloud upload'
-						disabled={uploadState === 'uploading'}
+						disabled={uploadState === "uploading"}
 					/>
 				</Button.Group>
 
