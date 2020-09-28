@@ -40,7 +40,11 @@ class MessagesForm extends Component {
 		});
 	};
 
-	handleKeyDown = () => {
+	handleKeyDown = (event) => {
+		if(event.ctrlKey && event.keyCode === 13) {
+			this.sendTextMessage();
+		}
+
 		const { message, typingRef, channel, user } = this.state;
 
 		if (message) {
