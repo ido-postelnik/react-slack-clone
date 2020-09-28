@@ -39,6 +39,18 @@ class Messages extends Component {
 		}
 	}
 
+	componentDidUpdate(prevProps, prevState) {
+		if (this.messagesEnd) {
+			this.scrollToBottom();
+		}
+	}
+
+	scrollToBottom = () => {
+		this.messagesEnd.scrollIntoView({ 
+			behavior: 'smooth'
+		});
+	}
+
 	addUserStarsListeners = (channelId, userId) => {
 		this.state.usersRef
 			.child(userId)
@@ -78,28 +90,24 @@ class Messages extends Component {
 	addTypingListener = (channelId) => {
 		let typingUsers = [];
 
-		this.state.typingRef
-			.child(channelId)
-			.on("child_added", (snap) => {
-				if (snap.key !== this.state.user.uid) {
-					typingUsers = typingUsers.concat({
-						id: snap.key,
-						name: snap.val(),
-					});
+		this.state.typingRef.child(channelId).on("child_added", (snap) => {
+			if (snap.key !== this.state.user.uid) {
+				typingUsers = typingUsers.concat({
+					id: snap.key,
+					name: snap.val(),
+				});
 
-					this.setState({ typingUsers });
-				}
-			});
+				this.setState({ typingUsers });
+			}
+		});
 
-		this.state.typingRef
-			.child(channelId)
-			.on("child_removed", (snap) => {
-				const index = typingUsers.findIndex((user) => user.id === snap.key);
-			
-				if (index !== -1) {
-					typingUsers = typingUsers.filter((user) => user.id !== snap.key);
-					this.setState({ typingUsers });
-				}
+		this.state.typingRef.child(channelId).on("child_removed", (snap) => {
+			const index = typingUsers.findIndex((user) => user.id === snap.key);
+
+			if (index !== -1) {
+				typingUsers = typingUsers.filter((user) => user.id !== snap.key);
+				this.setState({ typingUsers });
+			}
 		});
 
 		this.state.connectedRef.on("value", (snap) => {
@@ -244,15 +252,22 @@ class Messages extends Component {
 	};
 
 	displayTypingUsers = (users) => {
-		return users.length > 0 && users.map((user) => (
-			<div 
-				style={{ display: "flex", alignItems: "center", marginBottom: '0.2em' }}
-				key={user.id}
-			>
-				<span className='user__typing'>{user.name} is typing</span>
-				<Typing />
-			</div>
-		))
+		return (
+			users.length > 0 &&
+			users.map((user) => (
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						marginBottom: "0.2em",
+					}}
+					key={user.id}
+				>
+					<span className='user__typing'>{user.name} is typing</span>
+					<Typing />
+				</div>
+			))
+		);
 	};
 
 	render() {
@@ -293,6 +308,7 @@ class Messages extends Component {
 							? this.displayMessages(searchResults)
 							: this.displayMessages(messages)}
 						{this.displayTypingUsers(typingUsers)}
+						<div ref={(node) => (this.messagesEnd = node)}></div>
 					</Comment.Group>
 				</Segment>
 
