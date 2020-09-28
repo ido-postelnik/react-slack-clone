@@ -25,6 +25,13 @@ class MessagesForm extends Component {
 		emojiPicker: false,
 	};
 
+	componentWillUnmount() {
+		if(this.state.uploadTask !== null) {
+			this.state.uploadTask.cancel();
+			this.setState({ uploadTask: null })
+		}
+	}
+
 	openModal = () => {
 		this.setState({ modal: true });
 	};
@@ -41,7 +48,7 @@ class MessagesForm extends Component {
 	};
 
 	handleKeyDown = (event) => {
-		if(event.ctrlKey && event.keyCode === 13) {
+		if (event.ctrlKey && event.keyCode === 13) {
 			this.sendTextMessage();
 		}
 

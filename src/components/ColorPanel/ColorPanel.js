@@ -22,6 +22,10 @@ class ColorPanel extends Component {
 		}
 	}
 
+	componentWillUnmount() {
+		this.removeListener();
+	}
+
 	addListener = (userId) => {
 		let userColors = [];
 
@@ -33,6 +37,12 @@ class ColorPanel extends Component {
 			});
 		});
 	};
+
+	removeListener = () => {
+		this.state.usersRef
+			.child(`${this.state.user.uid}/colors`)
+			.off();
+	}
 
 	openModal = () => {
 		this.setState({ modal: true });
