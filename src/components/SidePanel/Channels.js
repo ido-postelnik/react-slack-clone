@@ -17,6 +17,7 @@ class Channels extends Component {
 		channel: null,
 		messagesRef: firebase.database().ref("messages"),
 		notifications: [],
+		typingRef: firebase.database().ref("typing"),
 	};
 
 	componentDidMount() {
@@ -152,7 +153,7 @@ class Channels extends Component {
 		if (this.state.firstLoad && this.state.channels.length > 0) {
 			this.props.setCurrentChannel(firstChannel);
 			this.setActiveChannel(firstChannel);
-			this.setState({channel: firstChannel});
+			this.setState({ channel: firstChannel });
 		}
 
 		this.setState({
@@ -162,6 +163,10 @@ class Channels extends Component {
 
 	changeChannel = (channel) => {
 		this.setActiveChannel(channel);
+		this.state.typingRef
+			.child(this.state.channel.id)
+			.child(this.state.user.uid)
+			.remove();
 		this.clearNotifications();
 		this.props.setCurrentChannel(channel);
 		this.props.setPrivateChannel(false);
@@ -201,7 +206,9 @@ class Channels extends Component {
 						style={{ opacity: 0.7 }}
 						active={channel.id === this.state.activeChannel}
 					>
-						{this.getNotificationsCount(channel) && <Label color='red'>{this.getNotificationsCount(channel)}</Label>}
+						{this.getNotificationsCount(channel) && (
+							<Label color='red'>{this.getNotificationsCount(channel)}</Label>
+						)}
 						# {channel.name}
 					</Menu.Item>
 				);
@@ -212,13 +219,13 @@ class Channels extends Component {
 	getNotificationsCount = (channel) => {
 		let count = 0;
 
-		this.state.notifications.forEach(n => {
-			if(n.id === channel.id) {
+		this.state.notifications.forEach((n) => {
+			if (n.id === channel.id) {
 				count = n.count;
 			}
 		});
 
-		if(count > 0) return count;
+		if (count > 0) return count;
 	};
 
 	render() {

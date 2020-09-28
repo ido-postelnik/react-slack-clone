@@ -18,7 +18,8 @@ class MessagesForm extends Component {
 		uploadTask: null,
 		storageRef: firebase.storage().ref(),
 		precentUploaded: 0,
-		isPrivateChannel: this.props.isPrivateChannel
+		isPrivateChannel: this.props.isPrivateChannel,
+		typingRef: firebase.database().ref('typing'),
 	};
 
 	openModal = () => {
@@ -35,6 +36,22 @@ class MessagesForm extends Component {
 			errors: [],
 		});
 	};
+
+	handleKeyDown = () => {
+		const { message, typingRef, channel, user } = this.state;
+
+		if(message) {
+			typingRef
+				.child(channel.id)
+				.child(user.uid)
+				.set(user.displayName);
+		} else {
+				typingRef
+				.child(channel.id)
+				.child(user.uid)
+				.remove();
+		}
+	}
 
 	createMessageObj = (fileUrl = null) => {
 		const message = {
@@ -59,7 +76,7 @@ class MessagesForm extends Component {
 
 	sendTextMessage = async () => {
 		const { getMessagesRef } = this.props;
-		const { message, channel } = this.state;
+		const { message, channel, typingRef, user } = this.state;
 
 		if (message) {
 			try {
@@ -69,6 +86,10 @@ class MessagesForm extends Component {
 					.push()
 					.set(this.createMessageObj());
 				this.setState({ loading: false, message: "", errors: [] });
+				typingRef
+				.child(channel.id)
+				.child(user.uid)
+				.remove();
 			} catch (err) {
 				console.error(err);
 				this.setState({
@@ -87,7 +108,7 @@ class MessagesForm extends Component {
 		if (this.state.isPrivateChannel) {
 			return `chat/private-${this.state.channel.id}`;
 		} else {
-			return 'chat/public';
+			return "chat/public";
 		}
 	};
 
@@ -182,6 +203,7 @@ class MessagesForm extends Component {
 					fluid
 					name='message'
 					onChange={this.handleChange}
+					onKeyDown={this.handleKeyDown}
 					value={message}
 					style={{ marginBottom: "0.7em" }}
 					label={<Button icon='add' />}
