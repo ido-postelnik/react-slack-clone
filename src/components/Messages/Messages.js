@@ -244,8 +244,6 @@ class Messages extends Component {
 	};
 
 	displayTypingUsers = (users) => {
-		console.log('typingUsers', users);
-
 		return users.length > 0 && users.map((user) => (
 			<div 
 				style={{ display: "flex", alignItems: "center", marginBottom: '0.2em' }}
