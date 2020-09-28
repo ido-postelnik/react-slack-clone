@@ -8,6 +8,7 @@ import MessagesHeader from "./MessagesHeader";
 import MessagesForm from "./MessagesForm";
 import Message from './Message';
 import Typing from "./Typing";
+import Skeleton from "./Skeleton";
 
 class Messages extends Component {
 	state = {
@@ -46,10 +47,10 @@ class Messages extends Component {
 	}
 
 	scrollToBottom = () => {
-		this.messagesEnd.scrollIntoView({ 
-			behavior: 'smooth'
+		this.messagesEnd.scrollIntoView({
+			behavior: "smooth",
 		});
-	}
+	};
 
 	addUserStarsListeners = (channelId, userId) => {
 		this.state.usersRef
@@ -270,6 +271,16 @@ class Messages extends Component {
 		);
 	};
 
+	displayMessagesSkeleton = (loading) => (
+		loading ? (
+			<React.Fragment>
+				{[...Array(10)].map((_, i) => (
+					<Skeleton key={i} />
+				))}
+			</React.Fragment>
+		) : null
+	)
+
 	render() {
 		const {
 			messagesRef,
@@ -284,6 +295,7 @@ class Messages extends Component {
 			privateChannel,
 			isChannelStarred,
 			typingUsers,
+			messagesLoading,
 		} = this.state;
 
 		return (
@@ -304,6 +316,7 @@ class Messages extends Component {
 							shouldShowProgressBar ? "messages__progress" : ""
 						}`}
 					>
+						{this.displayMessagesSkeleton(messagesLoading)}
 						{searchTerm
 							? this.displayMessages(searchResults)
 							: this.displayMessages(messages)}
