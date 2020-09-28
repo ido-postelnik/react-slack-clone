@@ -8,13 +8,13 @@ body,
 
 /* messages */
 .messages{
-  height: 70vh;
+  height: calc(100vh - 280px);
   overflow-y: scroll;
   min-width: 100%;
 }
 
 .messages__progress{
-  height: 66vh !important;
+  height: calc(100vh - 320px) !important;
 }
 
 .message__form{

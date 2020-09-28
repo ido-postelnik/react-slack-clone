@@ -54,9 +54,9 @@ class Messages extends Component {
 	}
 
 	removeListeners = (listeners) => {
-		listeners.forEach(listener => {
+		listeners.forEach((listener) => {
 			listener.ref.child(listener.id).off(listener.event);
-		})
+		});
 	};
 
 	addToListeners = (id, ref, event) => {
@@ -306,7 +306,7 @@ class Messages extends Component {
 	displayMessagesSkeleton = (loading) =>
 		loading ? (
 			<React.Fragment>
-				{[...Array(10)].map((_, i) => (
+				{[...Array(15)].map((_, i) => (
 					<Skeleton key={i} />
 				))}
 			</React.Fragment>
