@@ -58,7 +58,6 @@ const initialColorsState = {
 };
 
 const colors_reducer = (state = initialColorsState, action) => {
-	console.log("action.payload", action.payload);
 	switch (action.type) {
 		case actionTypes.SET_COLORS:
 			return {
