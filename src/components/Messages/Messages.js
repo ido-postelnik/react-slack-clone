@@ -105,6 +105,15 @@ class Messages extends Component {
 		let loadedMessages = [];
 		let ref = this.getMessagesRef();
 
+		ref.child(channelId).once("value", (snap) => {
+			const messagesData = snap.val();
+			if (!messagesData) {
+				this.setState({
+					messagesLoading: false,
+				});
+			}
+		});
+
 		ref.child(channelId).on("child_added", (snap) => {
 			loadedMessages.push(snap.val());
 			this.setState({
@@ -303,13 +312,18 @@ class Messages extends Component {
 		);
 	};
 
-	displayMessagesSkeleton = (loading) =>
+	displayMessagesSkeleton = (loading, messages) =>
 		loading ? (
 			<React.Fragment>
 				{[...Array(15)].map((_, i) => (
 					<Skeleton key={i} />
 				))}
 			</React.Fragment>
+		) : messages.length === 0 ? (
+			<div>
+				<p style={{margin: 0}}>No messages yet.</p>
+				<p>Be the first one to start the chat...</p>
+			</div>
 		) : null;
 
 	render() {
@@ -347,7 +361,7 @@ class Messages extends Component {
 							shouldShowProgressBar ? "messages__progress" : ""
 						}`}
 					>
-						{this.displayMessagesSkeleton(messagesLoading)}
+						{this.displayMessagesSkeleton(messagesLoading, messages)}
 						{searchTerm
 							? this.displayMessages(searchResults)
 							: this.displayMessages(messages)}
