@@ -51,7 +51,7 @@ class Starred extends Component {
 	};
 
 	removeListener = () => {
-		this.state.usersRef.child(`${this.state.users.uid}/starred`).off();
+		this.state.usersRef.child(`${this.state.user.uid}/starred`).off();
 	};
 
 	displayChannels = (starredChannels) => {
